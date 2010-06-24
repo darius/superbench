@@ -36,16 +36,15 @@ def find_circuits(wanted, ninputs, max_gates=None):
         found = [False]
         def searching(gate):
             "Try all possible inputs for all gates at index >= gate."
-            if gate == ngates:
-                if (mask & values[-1]) == wanted:
-                    found[0] = True
-                    print formula(circuit)
-            else:
-                for L in range(ninputs + gate):
-                    for R in range(L + 1): # (NAND gates are symmetric)
-                        circuit[gate] = (L, R)
-                        values[ninputs + gate] = ~(values[L] & values[R])
+            for L in range(ninputs + gate):
+                for R in range(L + 1): # (NAND gates are symmetric)
+                    circuit[gate] = (L, R)
+                    values[ninputs + gate] = ~(values[L] & values[R])
+                    if gate + 1 < ngates:
                         searching(gate + 1)
+                    elif (mask & values[-1]) == wanted:
+                        found[0] = True
+                        print formula(circuit)
         searching(0)
         return found[0]
 
