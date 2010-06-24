@@ -19,8 +19,7 @@ def superopt(truth_table, max_gates=None):
     small-enough NAND-gate circuits that compute that function."""
     ninputs = int(math.log(len(truth_table), 2))
     assert (1 << ninputs) == len(truth_table)
-    wanted = int(truth_table, 2)
-    find_circuits(wanted, ninputs, max_gates)
+    find_circuits(int(truth_table, 2), ninputs, max_gates)
 
 def find_circuits(wanted, ninputs, max_gates=None):
     """Given a truth table's output bitvector and #inputs, print
@@ -58,12 +57,9 @@ def find_circuits(wanted, ninputs, max_gates=None):
     vname = string.ascii_uppercase[:ninputs] + string.ascii_lowercase[ninputs:]
 
     print 'Trying 0 gates...'
-    if wanted in (0, 1):
-        print '%s = %d' % (vname[ninputs], wanted)
-        return
-    for v, input in enumerate(inputs):
+    for name, input in zip('01' + vname, [0, mask] + inputs):
         if wanted == input:
-            print '%s = %s' % (vname[ninputs], vname[v])
+            print '%s = %s' % (vname[ninputs], name)
             return
     for ngates in range(1, max_gates+1):
         print 'Trying %d gates...' % ngates
@@ -90,6 +86,10 @@ def make_inputs_vector(ninputs):
 ## ['%x' % i for i in make_inputs_vector(5)]
 #. ['ffff', 'ff00ff', 'f0f0f0f', '33333333', '55555555']
 
+## superopt('0101')
+#. Trying 0 gates...
+#. c = B
+#. 
 ## superopt('0110')
 #. Trying 0 gates...
 #. Trying 1 gates...
