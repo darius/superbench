@@ -29,7 +29,7 @@ def find_circuits(wanted, ninputs, max_gates=None):
     inputs = make_inputs_vector(ninputs)
     mask = (1 << (1 << ninputs)) - 1
 
-    def findn(ngates):
+    def find_for_n(ngates):
         "Find any specified circuits with exactly ngates gates."
         circuit = [None] * ngates
         values = inputs + [None] * ngates
@@ -65,7 +65,7 @@ def find_circuits(wanted, ninputs, max_gates=None):
     for ngates in range(1, max_gates+1):
         print 'Trying %d gates...' % ngates
         assert ninputs + ngates <= len(vname)
-        if findn(ngates):
+        if find_for_n(ngates):
             return
 
 def make_inputs_vector(ninputs):
