@@ -82,13 +82,10 @@ def make_inputs_vector(ninputs):
     [[(input >> k) & 1 for input in result] for k in range(1 << ninputs)]
     Transposed is more useful because we can compute all test cases in
     parallel using bitwise operators."""
-    # TODO: Prove correctness. I just hacked this by generalizing an example.
-    inputs = []
-    bits = mask = (1 << (1 << ninputs)) - 1
-    for i in range(ninputs-1, -1, -1):
-        bits ^= bits >> (1 << i)
-        inputs.append(mask ^ bits)
-    return inputs
+    if ninputs == 0: return []
+    shift = 1 << (ninputs-1)
+    return [(1 << shift) - 1] + [iv | (iv << shift)
+                                 for iv in make_inputs_vector(ninputs-1)]
 
 ## ['%x' % i for i in make_inputs_vector(5)]
 #. ['ffff', 'ff00ff', 'f0f0f0f', '33333333', '55555555']
