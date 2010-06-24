@@ -8,6 +8,7 @@ the target.)
 TODO: 
   * support don't-cares
   * eliminate more equivalent circuits without checking them
+  * also skip circuits with unused outputs
 """
 
 import math
@@ -31,7 +32,7 @@ def find_circuits(wanted, ninputs, max_gates=None):
     def findn(ngates):
         "Find any specified circuits with exactly ngates gates."
         circuit = [None] * ngates
-        values = inputs[:] + [None] * ngates
+        values = inputs + [None] * ngates
         found = [False]
         def searching(gate):
             "Try all possible inputs for all gates at index >= gate."
