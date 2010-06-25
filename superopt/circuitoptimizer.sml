@@ -7,6 +7,9 @@ TODO: actually finish
 *)
 
 val << = Word.<<     infix 5 <<
+val sub = Array.sub  infix 4 sub  (* what precedence should it be? *)
+
+val toW = Word.fromInt
 
 fun fail s =
     raise (Fail s)
@@ -16,15 +19,15 @@ fun println s =
 
 fun intFromString s =
     (case Int.fromString s
-      of NONE => fail "Not an integer"
+      of NONE   => fail "Not an integer"
        | SOME n => n)
 
 fun log2 (n: real) =
     Math.ln n / Math.ln 2.0
 
 fun log2int (n: int) =
-    let val result = Real.round (log2 (Real.fromInt n))
-    in if n = Real.round (Math.pow (2.0, Real.fromInt result))
+    let val result = round (log2 (real n))
+    in if n = round (Math.pow (2.0, real result))
        then result
        else fail "Wrong-sized truth table"
     end
@@ -35,8 +38,6 @@ fun superopt truth_table max_gates =
         println (Int.toString ninputs)
     end
 
-val toW = Word.fromInt
-
 fun tabulate_inputs ninputs =
     if ninputs = 0
     then []
@@ -45,12 +46,33 @@ fun tabulate_inputs ninputs =
                                           (tabulate_inputs (ninputs - 1))
          end
 
+val vnames = "abcdefghijklmnopqrstuvwxyz"
+
+fun vname v =
+    String.str (String.sub (vnames, v))
+
+fun print_formula ninputs gate_l gate_r =
+    let fun lname i = vname (gate_l sub i)
+        fun rname i = vname (gate_r sub i)
+        fun loop i =
+            if i = Array.length gate_l
+            then print "\n"
+            else (print ((if ninputs < i then "; " else "")
+                         ^ (vname i)
+                         ^ " = ~(" ^ (lname i) ^ " " ^ (rname i) ^ ")");
+                  loop (i + 1))
+    in loop ninputs
+    end
+
 fun main [truth_table]     = superopt truth_table 6
   | main [truth_table, mg] = superopt truth_table (intFromString mg)
   | main _ = fail "usage: circuitoptimizer truth_table [max_gates]"
 
 val _ =
     (app (println o Word.toString) (tabulate_inputs 5);
+     print_formula 3
+                   (Array.fromList [0,0,0,1,0])
+                   (Array.fromList [0,0,0,2,3]);
      ())
 (*
      main (CommandLine.arguments ())) *)
