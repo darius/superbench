@@ -50,6 +50,9 @@ val vnames = "abcdefghijklmnopqrstuvwxyz"
 fun vname v =
     String.str (String.sub (vnames, v))
 
+fun input_names ninputs =
+    map String.str (explode (String.substring (vnames, 0, ninputs)))
+
 fun print_formula ninputs gate_l gate_r =
     let fun lname i = vname (gate_l sub i)
         fun rname i = vname (gate_r sub i)
@@ -69,8 +72,8 @@ fun find_circuits target_output ninputs max_gates =
         val mask = (0w1 << (0w1 << toW ninputs)) - 0w1
     in (println "Trying 0 gates...";
         case List.find (fn (name, input) => input = target_output)
-                       (ListPair.zip (["0","1"],
-                                      [0w0,mask]))
+                       (ListPair.zip (["0","1"] @ (input_names ninputs),
+                                      [0w0,mask] @ inputs_list))
          of SOME (name, input) => println ((vname ninputs) ^ " = " ^ name)
           | NONE =>
             ())
