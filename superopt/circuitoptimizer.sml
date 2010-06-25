@@ -1,13 +1,18 @@
 (*
 A superoptimizer for combinational NAND circuits.
 Based on my Python version.
-TODO: actually finish
+TODO: 
+  * actually finish
+  * check that infix precedences are sane
 *)
 
-val << = Word.<<     infix 5 <<
-val sub = Array.sub  infix 4 sub  (* what precedence should it be? *)
+val <<     = Word.<<        infix 5 <<
+val andb   = Word.andb      infix 3 andb
+val notb   = Word.notb
+val toW    = Word.fromInt
 
-val toW = Word.fromInt
+val sub    = Array.sub      infix 4 sub
+val update = Array.update
 
 fun fail s =
     raise (Fail s)
@@ -66,17 +71,44 @@ fun print_formula ninputs gate_l gate_r =
     in loop ninputs
     end
 
+fun find_trivial_circuits target_output ninputs inputs_list mask = 
+    (println "Trying 0 gates...";
+     case List.find (fn (name, input) => input = target_output)
+                    (ListPair.zip (["0","1"] @ (input_names ninputs),
+                                   [0w0,mask] @ inputs_list))
+      of SOME (name, input) => (println ((vname ninputs) ^ " = " ^ name);
+                                true)
+       | NONE => false)
+
+fun find_nontrivial_circuits target_output ninputs max_gates inputs mask = 
+    let val found = ref false
+        val gate_l = Array.array (ninputs+1, 0)
+        val gate_r = Array.array (ninputs+1, 0)
+        fun loop_l (~1) = ()
+          | loop_l ll =
+            (update (gate_l, ninputs, ll);
+             let val value_l = inputs sub ll
+                 fun loop_r (~1) = loop_l (ll-1)
+                   | loop_r rr =
+                     (update (gate_r, ninputs, rr);
+                      if target_output =
+                         (mask andb notb (value_l andb (inputs sub rr)))
+                      then (found := true;
+                            print_formula ninputs gate_l gate_r)
+                      else ();
+                      loop_r (rr-1))
+             in loop_r ll
+             end)
+    in println "Trying 1 gates..."; loop_l (ninputs-1); !found
+    end
+    
 fun find_circuits target_output ninputs max_gates =
     let val inputs_list = tabulate_inputs ninputs
         val inputs = Array.fromList inputs_list
         val mask = (0w1 << (0w1 << toW ninputs)) - 0w1
-    in (println "Trying 0 gates...";
-        case List.find (fn (name, input) => input = target_output)
-                       (ListPair.zip (["0","1"] @ (input_names ninputs),
-                                      [0w0,mask] @ inputs_list))
-         of SOME (name, input) => println ((vname ninputs) ^ " = " ^ name)
-          | NONE =>
-            ())
+    in find_trivial_circuits target_output ninputs inputs_list mask
+       orelse 
+       find_nontrivial_circuits target_output ninputs max_gates inputs mask
     end
 
 fun superopt truth_table max_gates =
