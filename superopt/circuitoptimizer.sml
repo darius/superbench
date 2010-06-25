@@ -35,18 +35,22 @@ fun superopt truth_table max_gates =
         println (Int.toString ninputs)
     end
 
+val toW = Word.fromInt
+
 fun tabulate_inputs ninputs =
-    let val inputs = []
-        val mask = (0w1 << (0w1 << ninputs)) - 0w1
-        val bits = mask
-    in bits
-    end
+    if ninputs = 0
+    then []
+    else let val shift = 0w1 << toW (ninputs-1)
+         in ((0w1 << shift) - 0w1) :: map (fn iv => iv + (iv << shift))
+                                          (tabulate_inputs (ninputs - 1))
+         end
 
 fun main [truth_table]     = superopt truth_table 6
   | main [truth_table, mg] = superopt truth_table (intFromString mg)
   | main _ = fail "usage: circuitoptimizer truth_table [max_gates]"
 
 val _ =
-    (println (Word.toString (tabulate_inputs 0w4));
+    (app (println o Word.toString) (tabulate_inputs 5);
      ())
-(*     main (CommandLine.arguments ())) *)
+(*
+     main (CommandLine.arguments ())) *)
