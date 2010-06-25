@@ -35,7 +35,7 @@ fun superopt truth_table max_gates =
         println (Int.toString ninputs)
     end
 
-fun make_inputs_vector ninputs =
+fun tabulate_inputs ninputs =
     let val inputs = []
         val mask = (0w1 << (0w1 << ninputs)) - 0w1
         val bits = mask
@@ -47,6 +47,6 @@ fun main [truth_table]     = superopt truth_table 6
   | main _ = fail "usage: circuitoptimizer truth_table [max_gates]"
 
 val _ =
-    (println (Word.toString (make_inputs_vector 0w4));
+    (println (Word.toString (tabulate_inputs 0w4));
      ())
 (*     main (CommandLine.arguments ())) *)

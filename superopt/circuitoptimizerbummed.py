@@ -26,7 +26,7 @@ def find_circuits(wanted, ninputs, max_gates=None):
     """Given a truth table's output bitvector and #inputs, print
     out its circuits as above."""
     if max_gates is None: max_gates = 5
-    inputs = make_inputs_vector(ninputs)
+    inputs = tabulate_inputs(ninputs)
     mask = (1 << (1 << ninputs)) - 1
 
     def find_for_n(ngates):
@@ -74,7 +74,7 @@ def find_circuits(wanted, ninputs, max_gates=None):
         if find_for_n(ngates):
             return
 
-def make_inputs_vector(ninputs):
+def tabulate_inputs(ninputs):
     """An inputs vector is a list of ninputs bitstrings. It holds all
     possible input patterns 'transposed': that is, the kth test case
     can be formed out of bit #k of each the list's elements, one
@@ -85,9 +85,9 @@ def make_inputs_vector(ninputs):
     if ninputs == 0: return []
     shift = 1 << (ninputs-1)
     return [(1 << shift) - 1] + [iv | (iv << shift)
-                                 for iv in make_inputs_vector(ninputs-1)]
+                                 for iv in tabulate_inputs(ninputs-1)]
 
-## ['%x' % i for i in make_inputs_vector(5)]
+## ['%x' % i for i in tabulate_inputs(5)]
 #. ['ffff', 'ff00ff', 'f0f0f0f', '33333333', '55555555']
 
 ## superopt('0101')
