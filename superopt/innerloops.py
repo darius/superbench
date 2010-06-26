@@ -39,7 +39,7 @@ def compute(left_input, right_input):
 
 def recursive_loop():
     linput = [0]*nwires
-    rinput = [0]*nwires
+    rinput = [0]*(nwires-1)
     wire = inputs + [None]*(ngates-1)
     def outer(w):
         for ll in range(w):
@@ -49,7 +49,7 @@ def recursive_loop():
                 for rr in range(ll+1):
                     last_wire = compute(llwire, wire[rr])
                     if last_wire & mask == wanted:
-                        print linput, rinput, wire + [last_wire]
+                        print linput, rinput + [rr], wire + [last_wire]
             else:
                 for rr in range(ll+1):
                     wire[w] = compute(llwire, wire[rr])
