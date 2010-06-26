@@ -15,10 +15,10 @@ code duplication:
 
  * The code should be as clean and minimal as possible.
 
-Verdict: the nonrecursive solution is pretty awful: tricky code.
-I was hoping it'd go nicer, since the recursive one needs a bit of
-code duplication for the sake of a tight inner loop (and could take a
-bit of advantage of more, by duplicating the "for ll" loop, too).
+Verdict: the nonrecursive solution is quite tricky code. I was hoping
+it'd go nicer, since the recursive one needs a bit of code duplication
+for the sake of a tight inner loop (and could take a bit of advantage
+of more, by duplicating the "for ll" loop, too).
 
 I'll have to go check the superoptimizer papers out there now and see
 what everyone does in practice. I'd imagine the recursive one could
