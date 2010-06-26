@@ -1,9 +1,7 @@
 local bit = require('bit')
 local bnot   = bit.bnot
 local band   = bit.band
-local bor    = bit.bor
 local lshift = bit.lshift
-local rshift = bit.rshift
 
 function find_circuits(wanted, ninputs, max_gates)
    local inputs = tabulate_inputs(ninputs)
@@ -26,10 +24,18 @@ function find_circuits(wanted, ninputs, max_gates)
       return s
    end
 
+   function compute(left_input, right_input)
+      return bnot(band(left_input, right_input))
+   end
+
+   function find_for_n(ngates)
+      return false
+   end
+   
    do
       print('Trying 0 gates...')
-      assert(ninputs <= string.len("ABCDEF"))
-      local names  = '01' .. string.sub("ABCDEF", 1, ninputs)
+      assert(ninputs <= string.len('ABCDEF'))
+      local names  = '01' .. string.sub('ABCDEF', 1, ninputs)
       local inputs = append({0, mask}, inputs)
       for i, input in ipairs(inputs) do
          if wanted == input then
@@ -39,7 +45,12 @@ function find_circuits(wanted, ninputs, max_gates)
          end
       end
    end
-   assert(ninputs + max_gates <= 26) -- vnames must be distinct
+   for ngates = 1, max_gates do
+      print(string.format('Trying %d gates...', ngates))
+      assert(ninputs + ngates <= 26) -- vnames must be distinct
+      if find_for_n(ngates) then return true end
+   end
+   return false
 end
 
 function tabulate_inputs(ninputs)
@@ -47,11 +58,11 @@ function tabulate_inputs(ninputs)
       return {}
    else
       local shift = lshift(1, ninputs-1)
-      function extend(iv)
-         return bor(iv, lshift(iv, shift))
+      function replicate(iv)
+         return iv + lshift(iv, shift)
       end
       return cons(lshift(1, shift) - 1,
-                  map(extend, tabulate_inputs(ninputs-1)))
+                  map(replicate, tabulate_inputs(ninputs-1)))
    end
 end
 
