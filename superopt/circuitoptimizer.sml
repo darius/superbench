@@ -88,25 +88,28 @@ fun find_for_ngates target_output ninputs ngates inputs mask =
                                              then inputs sub i
                                              else 0w0)
         fun loop_gate gate =
-            loop_l gate (ninputs+gate-1)
-        and loop_l gate (~1) = ()
-          | loop_l gate ll =
-            let fun loop_r (~1) = loop_l gate (ll-1)
-                  | loop_r rr =
-                    let val value =
-                            notb ((values sub ll) andb (values sub rr))
-                    in update (gate_l, ninputs+gate, ll);
-                       update (gate_r, ninputs+gate, rr);
-                       update (values, ninputs+gate, value);
-                       (if gate+1 < ngates
-                        then loop_gate (gate+1)
-                        else if target_output = value andb mask
-                        then (found := true;
-                              print_formula ninputs gate_l gate_r)
-                        else ());
-                       loop_r (rr-1) 
-                    end
-            in loop_r ll
+            let fun loop_l ll =
+                    if ll < 0
+                    then ()
+                    else let fun loop_r rr =
+                                 if rr < 0
+                                 then loop_l (ll-1)
+                                 else let val value =
+                                              notb ((values sub ll) andb (values sub rr))
+                                      in update (gate_l, ninputs+gate, ll);
+                                         update (gate_r, ninputs+gate, rr);
+                                         update (values, ninputs+gate, value);
+                                         if gate+1 < ngates
+                                         then loop_gate (gate+1)
+                                         else if target_output = value andb mask
+                                         then (found := true;
+                                               print_formula ninputs gate_l gate_r)
+                                         else ();
+                                         loop_r (rr-1) 
+                                      end
+                         in loop_r ll
+                         end
+            in loop_l (ninputs+gate-1)
             end
     in loop_gate 0; !found
     end
