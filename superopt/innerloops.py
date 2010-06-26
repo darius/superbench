@@ -69,23 +69,25 @@ def loopy_loop():
     wire = inputs + [None]*(ngates-1) # (The last wire is computed elsewhere.)
     def compute():
         return ~(last_wire_linput & wire[last_rinput])
-    for w in range(ninputs, nwires-1):
-        last_wire_linput = wire[linput[w]]
-        last_rinput = rinput[w]
-        wire[w] = compute()
-    last_linput = linput[-1]
-    last_rinput = rinput[-1]
-    last_wire_linput = wire[last_linput]
+    w = ninputs
     while True:
-        # Start of inner loop
-        last_wire = compute()
-        if last_wire & mask == wanted:
-            print linput, rinput + [last_rinput], wire + [last_wire]
-        # Increment the 'last digit':
-        last_rinput += 1
-        if last_rinput <= last_linput:
-            continue
-        # End of inner loop
+        # Reestablish the wire[] and last_foo invariants:
+        for k in range(w, nwires-1):
+            last_wire_linput = wire[linput[k]]
+            last_rinput = rinput[k]
+            wire[k] = compute()
+        last_rinput = 0
+        last_linput = linput[-1]
+        last_wire_linput = wire[last_linput]
+        # Inner loop:
+        while True:
+            last_wire = compute()
+            if last_wire & mask == wanted:
+                print linput, rinput + [last_rinput], wire + [last_wire]
+            # Increment the 'last digit':
+            last_rinput += 1
+            if last_linput < last_rinput:
+                break
         # Propagate the 'carry':
         w = nwires-1
         while True:
@@ -100,13 +102,6 @@ def loopy_loop():
             if rinput[w] <= linput[w]:
                 break
             rinput[w] = 0
-        for k in range(w, nwires-1):
-            last_wire_linput = wire[linput[k]]
-            last_rinput = rinput[k]
-            wire[k] = compute()
-        last_linput = linput[-1]
-        last_rinput = 0
-        last_wire_linput = wire[last_linput]
 
 ## recursive_loop()
 #. [0, 0, 0, 0] [0, 0, 0, 0] [3, 5, -4, -4]
