@@ -15,11 +15,12 @@ function find_circuits(wanted, ninputs, max_gates)
       end
    end
 
-   function formula(gates_l, gates_r)
+   function formula(linput, rinput, nwires)
       local s = ''
-      for i = ninputs, #gates_l do
-         if s ~= '' then s = s + '; ' end
-         s = s + string.format('%s = ~(%s %s)', vname(i), vname(L), vname(R))
+      for w = ninputs, nwires-1 do
+         if s ~= '' then s = s .. '; ' end
+         s = string.format('%s%s = ~(%s %s)',
+                           s, vname(w), vname(linput[w]), vname(rinput[w]))
       end
       return s
    end
@@ -29,7 +30,40 @@ function find_circuits(wanted, ninputs, max_gates)
    end
 
    function find_for_n(ngates)
-      return false
+      local nwires = ninputs + ngates
+      local linput = {}
+      local rinput = {}
+      local wire   = {}
+      local found  = false
+      for i, input in ipairs(inputs) do
+         wire[i-1] = inputs[i]
+      end
+
+      function sweeping(w)
+         for ll = 0, w-1 do
+            local llwire = wire[ll]
+            linput[w] = ll
+            if w+1 == nwires then
+               for rr = 0, ll do
+                  local last_wire = compute(llwire, wire[rr])
+                  if band(mask, last_wire) == wanted then
+                     found = true
+                     rinput[w] = rr
+                     print(formula(linput, rinput, nwires))
+                  end
+               end
+            else
+               for rr = 0, ll do
+                  wire[w] = compute(llwire, wire[rr])
+                  rinput[w] = rr
+                  sweeping(w + 1)
+               end
+            end
+         end
+      end
+
+      sweeping(ninputs)
+      return found
    end
    
    do
@@ -90,7 +124,9 @@ function map(f, xs)
 end
 
 function print_array(xs)
-   for _, x in ipairs(xs) do
-      print(x)
+   print('{')
+   for i, x in ipairs(xs) do
+      print(' '..i..': '..x)
    end
+   print('}')
 end
