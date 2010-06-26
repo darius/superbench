@@ -88,30 +88,47 @@ fun find_for_ngates target_output ninputs ngates inputs mask =
                                                 then inputs sub i
                                                 else 0w0)
         fun loop_gate gate =
-            let fun loop_l ll =
-                    if ll < 0
-                    then ()
-                    else (update (gate_l, gate, ll);
-                          let fun loop_r rr =
-                                  if rr < 0
-                                  then loop_l (ll-1)
-                                  else let val value =
-                                               notb ((values sub ll) andb (values sub rr))
-                                       in if gate+1 < n
-                                          then (update (gate_r, gate, rr);
-                                                update (values, gate, value);
-                                                loop_gate (gate+1))
-                                          else if target_output = value andb mask
-                                          then (found := true;
-                                                update (gate_r, gate, rr);
-                                                print_formula ninputs gate_l gate_r)
-                                          else ();
-                                          loop_r (rr-1) 
-                                       end
-                          in loop_r ll
-                          end)
-            in loop_l (gate-1)
-            end
+            if gate+1 < n
+            then let fun loop_l ll =
+                         if ll < 0
+                         then ()
+                         else (update (gate_l, gate, ll);
+                               let val llvalue = values sub ll
+                                   fun loop_r rr =
+                                       if rr < 0
+                                       then loop_l (ll-1)
+                                       else let val value =
+                                                    notb (llvalue andb (values sub rr))
+                                            in update (gate_r, gate, rr);
+                                               update (values, gate, value);
+                                               loop_gate (gate+1);
+                                               loop_r (rr-1)
+                                            end
+                               in loop_r ll
+                               end)
+                 in loop_l (gate-1)
+                 end
+            else let fun loop_l ll =
+                         if ll < 0
+                         then ()
+                         else let val llvalue = values sub ll
+                                  fun loop_r rr =
+                                      if rr < 0
+                                      then loop_l (ll-1)
+                                      else let val value =
+                                                   notb (llvalue andb (values sub rr))
+                                           in if target_output = value andb mask
+                                              then (found := true;
+                                                    update (gate_l, gate, ll);
+                                                    update (gate_r, gate, rr);
+                                                    print_formula ninputs gate_l gate_r)
+                                              else ();
+                                              loop_r (rr-1) 
+                                           end
+                              in loop_r ll
+                              end
+                 in loop_l (gate-1)
+                 end
     in loop_gate ninputs; !found
     end
     
