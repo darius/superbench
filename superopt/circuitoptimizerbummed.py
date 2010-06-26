@@ -37,16 +37,14 @@ def find_circuits(wanted, ninputs, max_gates=None):
         found = [False]
         def searching(gate):
             "Try all possible inputs for all gates at index >= gate."
-            if gate + 1 < n:
-                for L in range(gate):
-                    lvalue = values[L]
+            for L in range(gate):
+                lvalue = values[L]
+                if gate + 1 < n:
                     for R in range(L + 1): # (NAND gates are symmetric)
                         values[gate] = ~(lvalue & values[R])
                         circuit[gate] = (L, R)
                         searching(gate + 1)
-            else:
-                for L in range(gate):
-                    lvalue = values[L]
+                else:
                     for R in range(L + 1): # (NAND gates are symmetric)
                         if (mask & ~(lvalue & values[R])) == wanted:
                             circuit[gate] = (L, R)
