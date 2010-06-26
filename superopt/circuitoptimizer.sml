@@ -81,12 +81,12 @@ fun find_trivial_circuits target_output ninputs inputs_list mask =
 
 fun find_for_ngates target_output ninputs ngates inputs mask = 
     let val found = ref false
-        val gate_l = Array.array (ninputs+ngates, 0)
-        val gate_r = Array.array (ninputs+ngates, 0)
-        val values = Array.tabulate (ninputs+ngates,
-                                     fn i => if i < ninputs
-                                             then inputs sub i
-                                             else 0w0)
+        val n = ninputs + ngates
+        val gate_l = Array.array (n, 0)
+        val gate_r = Array.array (n, 0)
+        val values = Array.tabulate (n, fn i => if i < ninputs
+                                                then inputs sub i
+                                                else 0w0)
         fun loop_gate gate =
             let fun loop_l ll =
                     if ll < 0
@@ -96,10 +96,10 @@ fun find_for_ngates target_output ninputs ngates inputs mask =
                                  then loop_l (ll-1)
                                  else let val value =
                                               notb ((values sub ll) andb (values sub rr))
-                                      in update (gate_l, ninputs+gate, ll);
-                                         update (gate_r, ninputs+gate, rr);
-                                         update (values, ninputs+gate, value);
-                                         if gate+1 < ngates
+                                      in update (gate_l, gate, ll);
+                                         update (gate_r, gate, rr);
+                                         update (values, gate, value);
+                                         if gate+1 < n
                                          then loop_gate (gate+1)
                                          else if target_output = value andb mask
                                          then (found := true;
@@ -109,9 +109,9 @@ fun find_for_ngates target_output ninputs ngates inputs mask =
                                       end
                          in loop_r ll
                          end
-            in loop_l (ninputs+gate-1)
+            in loop_l (gate-1)
             end
-    in loop_gate 0; !found
+    in loop_gate ninputs; !found
     end
     
 fun find_nontrivial_circuits target_output ninputs max_gates inputs mask = 
