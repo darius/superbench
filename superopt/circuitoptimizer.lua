@@ -123,7 +123,7 @@ function map(f, xs)
    return result
 end
 
-function print_array(xs)
+function print_table(xs)
    print('{')
    for i, x in ipairs(xs) do
       print(' '..i..': '..x)
