@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <limits.h>
 #include <math.h>
 #include <stdlib.h>
@@ -16,6 +17,8 @@ static void error (const char *plaint) {
     fprintf (stderr, "%s: %s\n", argv0, plaint);
     exit (1);
 }
+
+static Word target_output;
 
 static int ninputs;
 static Word mask;
@@ -38,15 +41,26 @@ static void print_circuit (void) {
     printf("\n");
 }
 
+static void find_circuits (int max_gates) {
+
+}
+
 static unsigned parse_uint (const char *s, unsigned base) {
-    assert (base == 10);
-    return (unsigned) atoi (s); /* XXX */
+    char *end;
+    unsigned long u = strtoul (s, &end, base);
+    if (u == 0 && errno == EINVAL)
+        error (strerror (errno));
+    if (*end != '\0')
+        error ("Literal has crud in it, or extra spaces, or something");
+    return (unsigned) u;
 }
 
 static void superopt (const char *tt_output, int max_gates) {
     ninputs = (int) log2 (strlen (tt_output));
     if (1u << ninputs != strlen (tt_output))
         error ("truth_table_output must have a power-of-2 size");
+    target_output = parse_uint (tt_output, 2);
+    find_circuits (max_gates);
 }
 
 int main (int argc, char **argv) {
