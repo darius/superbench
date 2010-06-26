@@ -114,8 +114,9 @@ fun find_for_ngates target_output ninputs ngates inputs mask =
     
 fun find_nontrivial_circuits target_output ninputs max_gates inputs mask = 
     let fun loop ngates =
-            (println ("Trying " ^ (Int.toString ngates) ^ " gates...");
-             find_for_n ngates orelse loop (ngates+1))
+            ngates <= max_gates
+            andalso (println ("Trying " ^ (Int.toString ngates) ^ " gates...");
+                     find_for_n ngates orelse loop (ngates+1))
         and find_for_n ngates =
             find_for_ngates target_output ninputs ngates inputs mask
     in loop 1
