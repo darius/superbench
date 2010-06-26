@@ -3,6 +3,12 @@ local bnot   = bit.bnot
 local band   = bit.band
 local lshift = bit.lshift
 
+function superopt(truth_table, max_gates)
+   local ninputs = math.log(string.len(truth_table)) / math.log(2)
+   assert(lshift(1, ninputs) == string.len(truth_table))
+   return find_circuits(tonumber(truth_table, 2), ninputs, max_gates)
+end
+
 function find_circuits(wanted, ninputs, max_gates)
    local inputs = tabulate_inputs(ninputs)
    local mask = lshift(1, lshift(1, ninputs)) - 1
@@ -30,6 +36,7 @@ function find_circuits(wanted, ninputs, max_gates)
    end
 
    function find_for_n(ngates)
+      -- TODO: try indexing wire, linput, rinput from 1
       local nwires = ninputs + ngates
       local linput = {}
       local rinput = {}
@@ -130,3 +137,5 @@ function print_table(xs)
    end
    print('}')
 end
+
+superopt(arg[1], tonumber(arg[2]) or 6)
