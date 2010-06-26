@@ -24,15 +24,37 @@ I'll have to go check the superoptimizer papers out there now and see
 what everyone does in practice. I'd imagine the recursive one could
 incorporate some of the algorithmic improvements more easily.
 
+Surprise: recursive is ~4 times as fast in Python.
+
 TODO: count down instead of up
 """
 
-ninputs = 2
-ngates  = 2
+def tabulate_inputs(ninputs):
+    """An inputs vector is a list of ninputs bitstrings. It holds all
+    possible input patterns 'transposed': that is, the kth test case
+    can be formed out of bit #k of each the list's elements, one
+    element per circuit input:
+    [[(input >> k) & 1 for input in result] for k in range(1 << ninputs)]
+    Transposed is more useful because we can compute all test cases in
+    parallel using bitwise operators."""
+    if ninputs == 0: return []
+    shift = 1 << (ninputs-1)
+    return [(1 << shift) - 1] + [iv | (iv << shift)
+                                 for iv in tabulate_inputs(ninputs-1)]
+
+bench = False
+if bench:
+    ninputs = 3
+    ngates  = 6
+    wanted  = 0x67              # Vectorized target output
+else:
+    ninputs = 2
+    ngates  = 2
+    wanted  = 0xC
+
 nwires  = ninputs + ngates
-inputs  = [0x3, 0x5]            # Vectorized
+inputs  = tabulate_inputs(ninputs)
 mask    = (1 << (1 << ninputs)) - 1
-wanted  = 0xC                   # Vectorized target output
 
 def compute(left_input, right_input):
     return ~(left_input & right_input)
@@ -104,3 +126,7 @@ def loopy_loop():
 #. [0, 0, 1, 0] [0, 0, 0, 0] [3, 5, -2, -4]
 #. [0, 0, 1, 0] [0, 0, 1, 0] [3, 5, -6, -4]
 #. 
+
+if bench:
+    recursive_loop()
+    #loopy_loop()
