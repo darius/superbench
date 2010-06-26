@@ -42,16 +42,16 @@ def recursive_loop():
     rinput = [0]*(nwires-1)
     wire = inputs + [None]*(ngates-1)
     def outer(w):
-        for ll in range(w):
+        for ll in xrange(w):
             llwire = wire[ll]
             if w+1 == nwires:
                 # Inner loop:
-                for rr in range(ll+1):
+                for rr in xrange(ll+1):
                     last_wire = compute(llwire, wire[rr])
                     if last_wire & mask == wanted:
                         print linput, rinput + [rr], wire + [last_wire]
             else:
-                for rr in range(ll+1):
+                for rr in xrange(ll+1):
                     wire[w] = compute(llwire, wire[rr])
                     linput[w] = ll
                     rinput[w] = rr
@@ -65,7 +65,7 @@ def loopy_loop():
     w = ninputs
     while True:
         # Reestablish the wire[] and last_foo invariants:
-        for k in range(w, nwires-1):
+        for k in xrange(w, nwires-1):
             wire[k] = compute(wire[linput[k]], wire[rinput[k]])
         last_rinput = 0
         last_linput = linput[-1]
