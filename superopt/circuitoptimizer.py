@@ -52,7 +52,7 @@ def find_circuits(wanted, ninputs, max_gates=None):
         "Describe circuit for a human."
         return '; '.join(('%s = ~(%s %s)'
                           % (vname[i+ninputs], vname[L], vname[R]))
-                       for i, (L, R) in enumerate(circuit))
+                         for i, (L, R) in enumerate(circuit))
 
     vname = string.ascii_uppercase[:ninputs] + string.ascii_lowercase[ninputs:]
 
