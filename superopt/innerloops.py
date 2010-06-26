@@ -65,6 +65,7 @@ def recursive_loop():
     wire = inputs + [None]*(ngates-1)
     def outer(w):
         for ll in xrange(w):
+            linput[w] = ll
             llwire = wire[ll]
             if w+1 == nwires:
                 # Inner loop:
@@ -75,7 +76,6 @@ def recursive_loop():
             else:
                 for rr in xrange(ll+1):
                     wire[w] = compute(llwire, wire[rr])
-                    linput[w] = ll
                     rinput[w] = rr
                     outer(w + 1)
     outer(ninputs)
