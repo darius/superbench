@@ -2,12 +2,11 @@
 A superoptimizer for combinational NAND circuits.
 Based on my Python version.
 TODO: 
-  * actually finish
   * check that infix precedences are sane
 *)
 
 val <<     = Word.<<        infix 5 <<
-val andb   = Word.andb      infix 3 andb
+val andb   = Word.andb      infix 5 andb
 val notb   = Word.notb
 val toW    = Word.fromInt
 
@@ -80,28 +79,48 @@ fun find_trivial_circuits target_output ninputs inputs_list mask =
                                 true)
        | NONE => false)
 
-fun find_nontrivial_circuits target_output ninputs max_gates inputs mask = 
+fun find_for_ngates target_output ninputs ngates inputs mask = 
     let val found = ref false
-        val gate_l = Array.array (ninputs+1, 0)
-        val gate_r = Array.array (ninputs+1, 0)
-        fun loop_l (~1) = ()
-          | loop_l ll =
-            (update (gate_l, ninputs, ll);
-             let val value_l = inputs sub ll
-                 fun loop_r (~1) = loop_l (ll-1)
-                   | loop_r rr =
-                     (update (gate_r, ninputs, rr);
-                      if target_output =
-                         (mask andb notb (value_l andb (inputs sub rr)))
-                      then (found := true;
-                            print_formula ninputs gate_l gate_r)
-                      else ();
-                      loop_r (rr-1))
-             in loop_r ll
-             end)
-    in println "Trying 1 gates..."; loop_l (ninputs-1); !found
+        val gate_l = Array.array (ninputs+ngates, 0)
+        val gate_r = Array.array (ninputs+ngates, 0)
+        val values = Array.tabulate (ninputs+ngates,
+                                     fn i => if i < ninputs
+                                             then inputs sub i
+                                             else 0w0)
+        fun loop_gate gate =
+            loop_l gate (ninputs+gate-1)
+        and loop_l gate (~1) = ()
+          | loop_l gate ll =
+            let fun loop_r (~1) = loop_l gate (ll-1)
+                  | loop_r rr =
+                    (update (gate_r, gate, rr);
+                     (let val value =
+                              notb ((values sub ll) andb (values sub rr))
+                      in update (gate_l, ninputs+gate, ll);
+                         update (gate_r, ninputs+gate, rr);
+                         update (values, ninputs+gate, value);
+                         (if gate+1 < ngates
+                          then loop_gate (gate+1)
+                          else if target_output = value andb mask
+                          then (found := true;
+                                print_formula ninputs gate_l gate_r)
+                          else ());
+                         loop_r (rr-1) 
+                      end))
+            in loop_r ll
+            end
+    in loop_gate 0; !found
     end
     
+fun find_nontrivial_circuits target_output ninputs max_gates inputs mask = 
+    let fun loop ngates =
+            (println ("Trying " ^ (Int.toString ngates) ^ " gates...");
+             find_for_n ngates orelse loop (ngates+1))
+        and find_for_n ngates =
+            find_for_ngates target_output ninputs ngates inputs mask
+    in loop 1
+    end
+
 fun find_circuits target_output ninputs max_gates =
     let val inputs_list = tabulate_inputs ninputs
         val inputs = Array.fromList inputs_list
@@ -114,8 +133,7 @@ fun find_circuits target_output ninputs max_gates =
 fun superopt truth_table max_gates =
     let val ninputs = log2int (String.size truth_table)
     in
-        (println (Int.toString ninputs);
-         find_circuits (toW (parse_binary truth_table)) ninputs max_gates)
+        find_circuits (toW (parse_binary truth_table)) ninputs max_gates
     end
 
 fun main [truth_table]     = superopt truth_table 6
@@ -123,8 +141,4 @@ fun main [truth_table]     = superopt truth_table 6
   | main _ = fail "usage: circuitoptimizer truth_table [max_gates]"
 
 val _ =
-    (app (println o Word.toString) (tabulate_inputs 5);
-     print_formula 3
-                   (Array.fromList [0,0,0,1,0])
-                   (Array.fromList [0,0,0,2,3]);
-     main (CommandLine.arguments ()))
+     main (CommandLine.arguments ())
