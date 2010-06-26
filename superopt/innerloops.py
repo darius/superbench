@@ -15,12 +15,7 @@ code duplication:
 
  * The code should be as clean and minimal as possible.
 
-Verdict: the nonrecursive solution is horrible. It might go a little
-bit faster with less overhead in the outer loops, but it has nothing
-else to recommend it that I can see. (Though my version is more awful
-than it needs to be, in defining a compute() in terms of inner-loop
-variables instead of a compute(left_input_value, right_input_value).)
-
+Verdict: the nonrecursive solution is pretty awful: tricky code.
 I was hoping it'd go nicer, since the recursive one needs a bit of
 code duplication for the sake of a tight inner loop (and could take a
 bit of advantage of more, by duplicating the "for ll" loop, too).
@@ -30,7 +25,6 @@ what everyone does in practice. I'd imagine the recursive one could
 incorporate some of the algorithmic improvements more easily.
 
 TODO: count down instead of up
-TODO: compute(left, right) instead
 """
 
 ninputs = 2
@@ -40,6 +34,9 @@ inputs  = [0x3, 0x5]            # Vectorized
 mask    = (1 << (1 << ninputs)) - 1
 wanted  = 0xC                   # Vectorized target output
 
+def compute(left_input, right_input):
+    return ~(left_input & right_input)
+
 def recursive_loop():
     linput = [0]*nwires
     rinput = [0]*nwires
@@ -47,17 +44,15 @@ def recursive_loop():
     def outer(w):
         for ll in range(w):
             llwire = wire[ll]
-            def compute(rr):
-                return ~(llwire & wire[rr])
             if w+1 == nwires:
                 # Inner loop:
                 for rr in range(ll+1):
-                    last_wire = compute(rr)
+                    last_wire = compute(llwire, wire[rr])
                     if last_wire & mask == wanted:
                         print linput, rinput, wire + [last_wire]
             else:
                 for rr in range(ll+1):
-                    wire[w] = compute(rr)
+                    wire[w] = compute(llwire, wire[rr])
                     linput[w] = ll
                     rinput[w] = rr
                     outer(w + 1)
@@ -67,21 +62,17 @@ def loopy_loop():
     linput = [0]*nwires
     rinput = [0]*(nwires-1)   # (The last rinput value is computed elsewhere.)
     wire = inputs + [None]*(ngates-1) # (The last wire is computed elsewhere.)
-    def compute():
-        return ~(last_wire_linput & wire[last_rinput])
     w = ninputs
     while True:
         # Reestablish the wire[] and last_foo invariants:
         for k in range(w, nwires-1):
-            last_wire_linput = wire[linput[k]]
-            last_rinput = rinput[k]
-            wire[k] = compute()
+            wire[k] = compute(wire[linput[k]], wire[rinput[k]])
         last_rinput = 0
         last_linput = linput[-1]
         last_wire_linput = wire[last_linput]
         # Inner loop:
         while True:
-            last_wire = compute()
+            last_wire = compute(last_wire_linput, wire[last_rinput])
             if last_wire & mask == wanted:
                 print linput, rinput + [last_rinput], wire + [last_wire]
             # Increment the 'last digit':
