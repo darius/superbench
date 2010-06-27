@@ -1,3 +1,5 @@
+// gcc --std=c99 -W -Wall -g2 -O2 circuitoptimizer.c -o circuitoptimizer
+
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
@@ -33,15 +35,34 @@ static char vname (int w) {
 }
 
 static void print_circuit (void) {
-    int w;
-    for (w = ninputs; w < nwires; ++w)
+    for (int w = ninputs; w < nwires; ++w)
         printf ("%s%c = ~(%c %c)",
                 w == ninputs ? "" : "; ",
                 vname (w), vname (linputs[w]), vname (rinputs[w]));
     printf("\n");
 }
 
+static void tabulate_inputs () {
+    // TODO
+}
+
 static void find_circuits (int max_gates) {
+    mask = (1u << (1u << ninputs)) - 1u;
+    tabulate_inputs ();
+    printf ("Trying 0 gates...\n");
+    if (target_output == 0) {
+        printf ("%c = 0\n", vname (ninputs));
+        return;
+    }
+    if (target_output == mask) {
+        printf ("%c = 1\n", vname (ninputs));
+        return;
+    }
+    for (int w = 0; w < ninputs; ++w)
+        if (target_output == wires[w]) {
+            printf ("%c = %c\n", vname (ninputs), vname (w));
+            return;
+        }
 
 }
 
