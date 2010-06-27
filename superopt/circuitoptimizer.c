@@ -1,4 +1,4 @@
-// gcc --std=c99 -W -Wall -g2 -O2 circuitoptimizer.c -o circuitoptimizer
+// gcc -std=c99 -W -Wall -g2 -O2 circuitoptimizer.c -o circuitoptimizer
 
 #include <assert.h>
 #include <errno.h>
@@ -42,8 +42,13 @@ static void print_circuit (void) {
     printf("\n");
 }
 
-static void tabulate_inputs () {
-    // TODO
+static void tabulate_inputs (void) {
+    for (int i = 1; i <= ninputs; ++i) {
+        Word shift = 1 << (i-1);
+        wires[ninputs-i] = (1u << shift) - 1;
+        for (int j = ninputs-i+1; j < ninputs; ++j)
+            wires[j] |= wires[j] << shift;
+    }
 }
 
 static void find_circuits (int max_gates) {
