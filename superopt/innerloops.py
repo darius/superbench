@@ -20,11 +20,15 @@ it'd go nicer, since the recursive one needs a bit of code duplication
 for the sake of a tight inner loop (and could take a bit of advantage
 of more, by duplicating the "for ll" loop, too).
 
+One advantage of nonrecursive: easier to checkpoint/restart. Or to 
+divvy up in parallel.
+
 I'll have to go check the superoptimizer papers out there now and see
 what everyone does in practice. I'd imagine the recursive one could
 incorporate some of the algorithmic improvements more easily.
 
-Surprise: recursive is ~4 times as fast in Python.
+Surprise: recursive is faster. Significantly faster in Python, a bit
+faster in C. Am I doing it wrong?
 
 TODO: count down instead of up
 """
@@ -109,7 +113,7 @@ def loopy_loop():
                 break
             linput[w] = 0
             w -= 1
-            if w < 0:
+            if w < ninputs:
                 return
             rinput[w] += 1
             if rinput[w] <= linput[w]:
