@@ -43,24 +43,6 @@ static void print_circuit (void) {
     printf("\n");
 }
 
-static void dump (void) {
-    for (int w = 0; w < nwires; ++w)
-        printf (" %x", mask & wires[w]);
-    printf ("\t");
-    for (int w = 0; w < nwires; ++w)
-        printf (" - %d %d", linputs[w], rinputs[w]);
-    printf ("\n");
-}
-
-static void tabulate_inputs (void) {
-    for (int i = 1; i <= ninputs; ++i) {
-        Word shift = 1 << (i-1);
-        wires[ninputs-i] = (1u << shift) - 1;
-        for (int j = ninputs-i+1; j < ninputs; ++j)
-            wires[j] |= wires[j] << shift;
-    }
-}
-
 static Word compute (Word left_input, Word right_input) {
     return ~(left_input & right_input);
 }
@@ -71,7 +53,6 @@ static void sweeping (int w) {
         linputs[w] = ll;
         if (w+1 == nwires)
             for (int rr = 0; rr <= ll; ++rr) {
-                //dump ();
                 if ((mask & compute (llwire, wires[rr])) == target_output) {
                     found = 1;
                     rinputs[w] = rr;
@@ -84,6 +65,15 @@ static void sweeping (int w) {
                 rinputs[w] = rr;
                 sweeping (w + 1);
             }
+    }
+}
+
+static void tabulate_inputs (void) {
+    for (int i = 1; i <= ninputs; ++i) {
+        Word shift = 1 << (i-1);
+        wires[ninputs-i] = (1u << shift) - 1;
+        for (int j = ninputs-i+1; j < ninputs; ++j)
+            wires[j] |= wires[j] << shift;
     }
 }
 
@@ -103,7 +93,7 @@ static void find_circuits (int max_gates) {
     for (int ngates = 1; ngates <= max_gates; ++ngates) {
         printf ("Trying %d gates...\n", ngates);
         nwires = ninputs + ngates;
-        assert (nwires <= 26); // vnames must be distinct
+        assert (nwires <= 26); // vnames must be letters
         if (sweeping (ninputs), found)
             return;
     }
@@ -123,6 +113,8 @@ static void superopt (const char *tt_output, int max_gates) {
     ninputs = (int) log2 (strlen (tt_output));
     if (1u << ninputs != strlen (tt_output))
         error ("truth_table_output must have a power-of-2 size");
+    if (max_inputs < ninputs)
+        error ("Truth table too big. I can't represent so many inputs.");
     target_output = parse_uint (tt_output, 2);
     find_circuits (max_gates);
 }
