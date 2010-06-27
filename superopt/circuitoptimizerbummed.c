@@ -1,4 +1,4 @@
-// gcc -std=c99 -W -Wall -g2 -O2 circuitoptimizer.c -o circuitoptimizer
+// gcc -std=c99 -W -Wall -g2 -O2 circuitoptimizerbummed.c -o circuitoptimizerbummed
 
 #include <assert.h>
 #include <errno.h>
@@ -31,6 +31,9 @@ static Word wires[max_wires];
 static int linputs[max_wires];
 static int rinputs[max_wires];
 
+// For wire w, a bitset of gate wires transitively used:
+static Word gates_used[max_wires];  
+
 static char vname (int w) {
     return (w < ninputs ? 'A' : 'a') + w;
 }
@@ -54,6 +57,24 @@ static void note_found (int llwire, int rr) {
     print_circuit ();
 }
 
+/* Classic binary divide-and-conquer popcount.
+   This is popcount_2() from
+   http://en.wikipedia.org/wiki/Hamming_weight */
+/* 15 ops, 3 long immediates, 14 stages */
+static Word
+popcount (Word x)
+{
+    Word m1 = 0x55555555;
+    Word m2 = 0x33333333;
+    Word m4 = 0x0f0f0f0f;
+    x -= (x >> 1) & m1;
+    x = (x & m2) + ((x >> 2) & m2);
+    x = (x + (x >> 4)) & m4;
+    x += x >>  8;
+    return (x + (x >> 16)) & 0x3f;
+    // TODO: specialize for shorter bitsets
+}
+
 static void sweeping (int w) {
     for (int ll = 0; ll < w; ++ll) {
         Word llwire = wires[ll];
@@ -65,17 +86,49 @@ static void sweeping (int w) {
                 // To produce fewer equivalent circuits, we enforce an
                 // ordering on the *truth functions* of the inputs
                 // as well as the numbering of the input wires.
-                if (llwire < rrwire) continue;
+                if (llwire < rrwire)
+                    goto skip;
+
                 Word w_wire = compute (llwire, rrwire);
-                for (int k = w-1; 0 <= k; --k)
-                    // Computing w_wire twice can't be optimal.
+
+                // Computing w_wire twice can't be optimal.
+                for (int k = w-1; 0 <= k; --k) {
                     if (wires[k] == w_wire)
-                        goto already;
+                        goto skip;
+                }
+
+                // Here we enforce an order on the truth functions of
+                // gates that commute. Gate w commutes with gate k if
+                // gate w uses no wire between k and w:
+                // TODO: could probably code this more tightly
+                Word used = (1 << ll) | gates_used[ll] | (1 << rr) | gates_used[rr];
+                for (int k = w-1; ninputs <= k; --k) {
+                    if (used & (1 << k))
+                        break;
+                    if (w_wire < wires[k])
+                        goto skip;
+                }
+
+                // Require there to be enough inputs still unassigned to
+                // use all of the unused gates built so far.
+                // TODO: could probably code this more tightly
+                Word all_used = used;
+                for (int k = w-1; ninputs <= k; --k)
+                    all_used |= gates_used[k];
+                Word used_set = all_used >> ninputs;
+                unsigned n_internal_gates = nwires - 1 - ninputs;
+                Word unused = ((1<<n_internal_gates)-1) ^ used_set;
+                int n_still_unassigned = 2 * (nwires - w - 1);
+                if (n_still_unassigned < popcount (unused))
+                    goto skip;
+
+                // OK! This gate's not pruned.
+                // XXX The above pruning logic is pretty hairy. Test that it works.
+                gates_used[w] = used;
                 wires[w] = w_wire;
                 rinputs[w] = rr;
                 sweeping (w + 1);
-            already:
-                ;
+            skip: ;
             }
         } else if (ll == w-1) {
             for (int rr = 0; rr <= ll; ++rr) {
@@ -115,6 +168,7 @@ static void find_circuits (int max_gates) {
             printf ("%c = %c\n", vname (ninputs), vname (w));
             return;
         }
+    memset (gates_used, 0, sizeof gates_used);
     for (int ngates = 1; ngates <= max_gates; ++ngates) {
         printf ("Trying %d gates...\n", ngates);
         nwires = ninputs + ngates;
