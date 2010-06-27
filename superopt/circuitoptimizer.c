@@ -24,8 +24,9 @@ static Word target_output;
 
 static int ninputs;
 static Word mask;
-static int nwires;
 
+static int found = 0;           // boolean
+static int nwires;
 static Word wires[max_wires];
 static int linputs[max_wires];
 static int rinputs[max_wires];
@@ -42,6 +43,15 @@ static void print_circuit (void) {
     printf("\n");
 }
 
+static void dump (void) {
+    for (int w = 0; w < nwires; ++w)
+        printf (" %x", mask & wires[w]);
+    printf ("\t");
+    for (int w = 0; w < nwires; ++w)
+        printf (" - %d %d", linputs[w], rinputs[w]);
+    printf ("\n");
+}
+
 static void tabulate_inputs (void) {
     for (int i = 1; i <= ninputs; ++i) {
         Word shift = 1 << (i-1);
@@ -51,16 +61,38 @@ static void tabulate_inputs (void) {
     }
 }
 
+static Word compute (Word left_input, Word right_input) {
+    return ~(left_input & right_input);
+}
+
+static void sweeping (int w) {
+    for (int ll = 0; ll < w; ++ll) {
+        Word llwire = wires[ll];
+        linputs[w] = ll;
+        if (w+1 == nwires)
+            for (int rr = 0; rr <= ll; ++rr) {
+                //dump ();
+                if ((mask & compute (llwire, wires[rr])) == target_output) {
+                    found = 1;
+                    rinputs[w] = rr;
+                    print_circuit ();
+                }
+            }
+        else
+            for (int rr = 0; rr <= ll; ++rr) {
+                wires[w] = compute (llwire, wires[rr]);
+                rinputs[w] = rr;
+                sweeping (w + 1);
+            }
+    }
+}
+
 static void find_circuits (int max_gates) {
     mask = (1u << (1u << ninputs)) - 1u;
     tabulate_inputs ();
     printf ("Trying 0 gates...\n");
-    if (target_output == 0) {
-        printf ("%c = 0\n", vname (ninputs));
-        return;
-    }
-    if (target_output == mask) {
-        printf ("%c = 1\n", vname (ninputs));
+    if (target_output == 0 || target_output == mask) {
+        printf ("%c = %d\n", vname (ninputs), target_output & 1);
         return;
     }
     for (int w = 0; w < ninputs; ++w)
@@ -68,7 +100,13 @@ static void find_circuits (int max_gates) {
             printf ("%c = %c\n", vname (ninputs), vname (w));
             return;
         }
-
+    for (int ngates = 1; ngates <= max_gates; ++ngates) {
+        printf ("Trying %d gates...\n", ngates);
+        nwires = ninputs + ngates;
+        assert (nwires <= 26); // vnames must be distinct
+        if (sweeping (ninputs), found)
+            return;
+    }
 }
 
 static unsigned parse_uint (const char *s, unsigned base) {
