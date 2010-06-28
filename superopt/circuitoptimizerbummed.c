@@ -34,7 +34,6 @@ static int rinputs[max_wires];
 // gates_used[w] = a bitset of all gate wires transitively used if you
 //   use gate w
 static Word gates_used[max_wires];  
-static int twice_ninputs_plus_n_internal_gates;
 
 static char vname (int w) {
     return (w < ninputs ? 'A' : 'a') + w;
@@ -61,6 +60,9 @@ static void note_found (int llwire, int rr) {
 
 // Given the partial circuit before wire #w, with bitset prev_used
 // representing which gates are used as inputs within that circuit.
+// (And all_used_size must be the number of bits set in prev_used,
+// plus a loop-invariant offset to make the too-many-unused comparison
+// go faster.)
 // Check all extensions of that partial circuit to nwires (pruned
 // for symmetry and optimality).
 static void sweeping (int w, Word prev_used, int prev_used_size) {
@@ -90,13 +92,13 @@ static void sweeping (int w, Word prev_used, int prev_used_size) {
                 int all_used_size = l_used_size;
                 if (ninputs <= rr && ll != rr)
                     all_used_size += 1 & ((~prev_used) >> rr);
-                // The ridiculous expression below goes about 3% faster than the
-                // more obvious
+                // The ridiculously opaque expression below is equivalent to, but
+                // faster than, the more obvious
                 //   Word n_internal_gates = ngates - 1;  // (hoisted to global)
                 //   Word n_unused = n_internal_gates - popcount (all_used);
                 //   Word n_still_unassigned = 2 * (nwires - w - 1);
                 //   if (n_still_unassigned < n_unused)
-                if (twice_ninputs_plus_n_internal_gates + all_used_size < 2*w)
+                if (all_used_size < 2*w)
                     goto skip;
 
                 Word w_wire = compute (llwire, rrwire);
@@ -169,8 +171,7 @@ static void find_circuits (int max_gates) {
         printf ("Trying %d gates...\n", ngates);
         nwires = ninputs + ngates;
         assert (nwires <= 26); // vnames must be letters
-        twice_ninputs_plus_n_internal_gates = ninputs + nwires - 1;
-        if (sweeping (ninputs, 0, 0), found)
+        if (sweeping (ninputs, 0, ninputs + nwires - 1), found)
             return;
     }
 }
