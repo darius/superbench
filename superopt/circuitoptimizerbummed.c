@@ -59,33 +59,20 @@ static void note_found (int llwire, int rr) {
     print_circuit ();
 }
 
-/* Classic binary divide-and-conquer popcount.
-   This is popcount_2() from
-   http://en.wikipedia.org/wiki/Hamming_weight */
-/* 15 ops, 3 long immediates, 14 stages */
-static Word
-popcount (Word x)
-{
-    Word m1 = 0x55555555;
-    Word m2 = 0x33333333;
-    Word m4 = 0x0f0f0f0f;
-    x -= (x >> 1) & m1;
-    x = (x & m2) + ((x >> 2) & m2);
-    x = (x + (x >> 4)) & m4;
-    x += x >> 8;
-    return (x + (x >> 16)) & 0x3f;
-}
-
 // Given the partial circuit before wire #w, with bitset prev_used
 // representing which gates are used as inputs within that circuit.
 // Check all extensions of that partial circuit to nwires (pruned
 // for symmetry and optimality).
-static void sweeping (int w, Word prev_used) {
+static void sweeping (int w, Word prev_used, int prev_used_size) {
     for (int ll = 0; ll < w; ++ll) {
         Word llwire = wires[ll];
         linputs[w] = ll;
 
         if (w+1 < nwires) {
+            int l_used_size = prev_used_size;
+            if (ninputs <= ll)
+                l_used_size += 1 & ((~prev_used) >> ll);
+
             // Since NAND is symmetric, we can require the right wire's 
             // number to be <= the left one's.
             for (int rr = 0; rr <= ll; ++rr) {
@@ -100,13 +87,16 @@ static void sweeping (int w, Word prev_used) {
                 // enough to use all of the still-unused gate outputs.
                 Word used = gates_used[ll] | gates_used[rr];
                 Word all_used = prev_used | used;
+                int all_used_size = l_used_size;
+                if (ninputs <= rr && ll != rr)
+                    all_used_size += 1 & ((~prev_used) >> rr);
                 // The ridiculous expression below goes about 3% faster than the
                 // more obvious
                 //   Word n_internal_gates = ngates - 1;  // (hoisted to global)
                 //   Word n_unused = n_internal_gates - popcount (all_used);
                 //   Word n_still_unassigned = 2 * (nwires - w - 1);
                 //   if (n_still_unassigned < n_unused)
-                if (twice_ninputs_plus_n_internal_gates + popcount (all_used) < 2*w)
+                if (twice_ninputs_plus_n_internal_gates + all_used_size < 2*w)
                     goto skip;
 
                 Word w_wire = compute (llwire, rrwire);
@@ -133,7 +123,7 @@ static void sweeping (int w, Word prev_used) {
                 gates_used[w] = used | (1 << w);
                 wires[w] = w_wire;
                 rinputs[w] = rr;
-                sweeping (w + 1, all_used);
+                sweeping (w + 1, all_used, all_used_size);
             skip: ;
             }
         } else if (ll == w-1) {
@@ -180,7 +170,7 @@ static void find_circuits (int max_gates) {
         nwires = ninputs + ngates;
         assert (nwires <= 26); // vnames must be letters
         twice_ninputs_plus_n_internal_gates = ninputs + nwires - 1;
-        if (sweeping (ninputs, 0), found)
+        if (sweeping (ninputs, 0, 0), found)
             return;
     }
 }
