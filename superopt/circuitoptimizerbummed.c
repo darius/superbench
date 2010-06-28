@@ -34,6 +34,7 @@ static int rinputs[max_wires];
 // gates_used[w] = a bitset of all gate wires transitively used if you
 //   use gate w
 static Word gates_used[max_wires];  
+static Word all_internal_gates; // The universal set for the above
 
 static char vname (int w) {
     return (w < ninputs ? 'A' : 'a') + w;
@@ -116,11 +117,8 @@ static void sweeping (int w, Word prev_used) {
 
                 // Require there to be enough inputs still unassigned to
                 // use all of the unused gates built so far.
-                // TODO: could probably code this a bit more tightly
                 Word all_used = prev_used | used;
-                Word used_set = all_used >> ninputs;
-                unsigned n_internal_gates = nwires - 1 - ninputs;
-                Word unused = ((1<<n_internal_gates)-1) ^ used_set;
+                Word unused = all_internal_gates ^ all_used;
                 int n_still_unassigned = 2 * (nwires - w - 1);
                 if (n_still_unassigned < popcount (unused))
                     goto skip;
@@ -176,6 +174,7 @@ static void find_circuits (int max_gates) {
         printf ("Trying %d gates...\n", ngates);
         nwires = ninputs + ngates;
         assert (nwires <= 26); // vnames must be letters
+        all_internal_gates = ((1 << (ngates-1)) - 1) << ninputs;
         if (sweeping (ninputs, 0), found)
             return;
     }
