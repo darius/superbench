@@ -75,46 +75,50 @@ popcount (Word x)
     // TODO: specialize for shorter bitsets
 }
 
-static void sweeping (int w) {
+// Given the partial circuit before wire #w, with bitset prev_used
+// representing which gates are used as inputs within that circuit.
+// Check all extensions of that partial circuit to nwires (pruned
+// for symmetry and optimality).
+static void sweeping (int w, Word prev_used) {
     for (int ll = 0; ll < w; ++ll) {
         Word llwire = wires[ll];
         linputs[w] = ll;
 
         if (w+1 < nwires) {
+            // Since NAND is symmetric, we can require that the right wire's 
+            // number <= the left one's.
             for (int rr = 0; rr <= ll; ++rr) {
                 Word rrwire = wires[rr];
+
                 // To produce fewer equivalent circuits, we enforce an
-                // ordering on the *truth functions* of the inputs
-                // as well as the numbering of the input wires.
+                // ordering on the *truth functions* of the inputs too.
                 if (llwire < rrwire)
                     goto skip;
 
                 Word w_wire = compute (llwire, rrwire);
 
-                // Computing w_wire twice can't be optimal.
-                for (int k = w-1; 0 <= k; --k) {
-                    if (wires[k] == w_wire)
-                        goto skip;
-                }
-
                 // Here we enforce an order on the truth functions of
                 // gates that commute. Gate w commutes with gate k if
                 // gate w uses no wire between k and w:
+                // Also, computing w_wire twice can't be optimal.
                 // TODO: could probably code this more tightly
                 Word used = (1 << ll) | gates_used[ll] | (1 << rr) | gates_used[rr];
-                for (int k = w-1; ninputs <= k; --k) {
+                int k;
+                for (k = w-1; ninputs <= k; --k) {
                     if (used & (1 << k))
                         break;
-                    if (w_wire < wires[k])
+                    if (w_wire <= wires[k])
+                        goto skip;
+                }
+                for (; 0 <= k; --k) {
+                    if (wires[k] == w_wire)
                         goto skip;
                 }
 
                 // Require there to be enough inputs still unassigned to
                 // use all of the unused gates built so far.
-                // TODO: could probably code this more tightly
-                Word all_used = used;
-                for (int k = w-1; ninputs <= k; --k)
-                    all_used |= gates_used[k];
+                // TODO: could probably code this a bit more tightly
+                Word all_used = prev_used | used;
                 Word used_set = all_used >> ninputs;
                 unsigned n_internal_gates = nwires - 1 - ninputs;
                 Word unused = ((1<<n_internal_gates)-1) ^ used_set;
@@ -127,7 +131,7 @@ static void sweeping (int w) {
                 gates_used[w] = used;
                 wires[w] = w_wire;
                 rinputs[w] = rr;
-                sweeping (w + 1);
+                sweeping (w + 1, all_used);
             skip: ;
             }
         } else if (ll == w-1) {
@@ -173,7 +177,7 @@ static void find_circuits (int max_gates) {
         printf ("Trying %d gates...\n", ngates);
         nwires = ninputs + ngates;
         assert (nwires <= 26); // vnames must be letters
-        if (sweeping (ninputs), found)
+        if (sweeping (ninputs, 0), found)
             return;
     }
 }
