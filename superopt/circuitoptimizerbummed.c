@@ -31,7 +31,8 @@ static Word wires[max_wires];
 static int linputs[max_wires];
 static int rinputs[max_wires];
 
-// For wire w, a bitset of gate wires transitively used:
+// gates_used[w] = a bitset of all gate wires transitively used if you
+//   use gate w
 static Word gates_used[max_wires];  
 
 static char vname (int w) {
@@ -102,7 +103,7 @@ static void sweeping (int w, Word prev_used) {
                 // gate w uses no wire between k and w:
                 // Also, computing w_wire twice can't be optimal.
                 // TODO: could probably code this more tightly
-                Word used = (1 << ll) | gates_used[ll] | (1 << rr) | gates_used[rr];
+                Word used = gates_used[ll] | gates_used[rr];
                 int k;
                 for (k = w-1; ninputs <= k; --k) {
                     if (used & (1 << k))
@@ -128,7 +129,7 @@ static void sweeping (int w, Word prev_used) {
 
                 // OK! This gate's not pruned.
                 // XXX The above pruning logic is pretty hairy. Test that it works.
-                gates_used[w] = used;
+                gates_used[w] = used | (1 << w);
                 wires[w] = w_wire;
                 rinputs[w] = rr;
                 sweeping (w + 1, all_used);
