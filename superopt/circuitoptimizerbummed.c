@@ -73,7 +73,6 @@ popcount (Word x)
     x = (x + (x >> 4)) & m4;
     x += x >>  8;
     return (x + (x >> 16)) & 0x3f;
-    // TODO: specialize for shorter bitsets
 }
 
 // Given the partial circuit before wire #w, with bitset prev_used
@@ -102,7 +101,6 @@ static void sweeping (int w, Word prev_used) {
                 // gates that commute. Gate w commutes with gate k if
                 // gate w uses no wire between k and w:
                 // Also, computing w_wire twice can't be optimal.
-                // TODO: could probably code this more tightly
                 Word used = gates_used[ll] | gates_used[rr];
                 int k;
                 for (k = w-1; ninputs <= k; --k) {
