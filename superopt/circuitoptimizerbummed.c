@@ -96,13 +96,21 @@ static void sweeping (int w, Word prev_used) {
                 if (llwire < rrwire)
                     goto skip;
 
+                // Require there to be enough inputs still unassigned to
+                // use all of the unused gates built so far.
+                Word used = gates_used[ll] | gates_used[rr];
+                Word all_used = prev_used | used;
+                Word unused = all_internal_gates ^ all_used;
+                int n_still_unassigned = 2 * (nwires - w - 1);
+                if (n_still_unassigned < popcount (unused))
+                    goto skip;
+
                 Word w_wire = compute (llwire, rrwire);
 
                 // Here we enforce an order on the truth functions of
                 // gates that commute. Gate w commutes with gate k if
                 // gate w uses no wire between k and w:
                 // Also, computing w_wire twice can't be optimal.
-                Word used = gates_used[ll] | gates_used[rr];
                 int k;
                 for (k = w-1; ninputs <= k; --k) {
                     if (used & (1 << k))
@@ -114,14 +122,6 @@ static void sweeping (int w, Word prev_used) {
                     if (wires[k] == w_wire)
                         goto skip;
                 }
-
-                // Require there to be enough inputs still unassigned to
-                // use all of the unused gates built so far.
-                Word all_used = prev_used | used;
-                Word unused = all_internal_gates ^ all_used;
-                int n_still_unassigned = 2 * (nwires - w - 1);
-                if (n_still_unassigned < popcount (unused))
-                    goto skip;
 
                 // OK! This gate's not pruned.
                 // XXX The above pruning logic is pretty hairy. Test that it works.
