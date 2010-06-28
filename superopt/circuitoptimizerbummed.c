@@ -107,10 +107,11 @@ static void sweeping (int w, Word prev_used) {
 
                 Word w_wire = compute (llwire, rrwire);
 
-                // Here we enforce an order on the truth functions of
+                // Two ways of pruning, with combined code.
+                // First, we enforce an order on the truth functions of
                 // gates that commute. Gate w commutes with gate k if
-                // gate w uses no wire between k and w:
-                // Also, computing w_wire twice can't be optimal.
+                // gate w uses no wire between k and w.
+                // Second, computing w_wire twice can't be optimal.
                 int k;
                 for (k = w-1; ninputs <= k; --k) {
                     if (used & (1 << k))
