@@ -86,8 +86,8 @@ static void sweeping (int w, Word prev_used) {
         linputs[w] = ll;
 
         if (w+1 < nwires) {
-            // Since NAND is symmetric, we can require that the right wire's 
-            // number <= the left one's.
+            // Since NAND is symmetric, we can require the right wire's 
+            // number to be <= the left one's.
             for (int rr = 0; rr <= ll; ++rr) {
                 Word rrwire = wires[rr];
 
@@ -96,8 +96,8 @@ static void sweeping (int w, Word prev_used) {
                 if (llwire < rrwire)
                     goto skip;
 
-                // Require there to be enough inputs still unassigned to
-                // use all of the unused gates built so far.
+                // Require the count of inputs still unassigned to be
+                // enough to use all of the still-unused gate outputs.
                 Word used = gates_used[ll] | gates_used[rr];
                 Word all_used = prev_used | used;
                 // The ridiculous expression below goes about 3% faster than the
