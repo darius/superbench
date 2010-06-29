@@ -59,10 +59,10 @@ static void note_found (int llwire, int rr) {
 }
 
 // Given the partial circuit before wire #w, with bitset prev_used
-// representing which gates are used as inputs within that circuit.
-// (And all_used_size must be the number of bits set in prev_used,
-// plus a loop-invariant offset to make the too-many-unused comparison
-// go faster.)
+// representing which gates are used as inputs within that circuit;
+// and given all_used_size as the number of bits set in prev_used,
+// plus a loop-invariant offset to let the too-many-unused comparison
+// go faster:
 // Check all extensions of that partial circuit to nwires (pruned
 // for symmetry and optimality).
 static void sweeping (int w, Word prev_used, int prev_used_size) {
@@ -94,7 +94,7 @@ static void sweeping (int w, Word prev_used, int prev_used_size) {
                     all_used_size += 1 & ((~prev_used) >> rr);
                 // The ridiculously opaque expression below is equivalent to, but
                 // faster than, the more obvious
-                //   Word n_internal_gates = ngates - 1;  // (hoisted to global)
+                //   Word n_internal_gates = ngates - 1;
                 //   Word n_unused = n_internal_gates - popcount (all_used);
                 //   Word n_still_unassigned = 2 * (nwires - w - 1);
                 //   if (n_still_unassigned < n_unused)
