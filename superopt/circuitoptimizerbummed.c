@@ -122,6 +122,8 @@ static void sweeping (int w, Word prev_used, int prev_used_size) {
 
                 // OK! This gate's not pruned.
                 // XXX The above pruning logic is pretty hairy. Test that it works.
+                // XXX What I'm least sure of is the llwire<rrwire condition -- I'm
+                // XXX not sure with the other conditions it's not an overconstraint.
                 gates_used[w] = used | (1 << w);
                 wires[w] = w_wire;
                 rinputs[w] = rr;
