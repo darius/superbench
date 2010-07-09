@@ -12,7 +12,7 @@ function read_program()
    f:close()
 
    for i = 1, string.len(bytes), 4 do
-      function c(j)
+      local function c(j)
          return string.byte(bytes, i+j)
       end
       local word = ((((c(0) * 256) + c(1)) * 256 + c(2)) * 256) + c(3)
