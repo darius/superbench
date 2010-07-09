@@ -92,8 +92,8 @@ static void sweeping (int w, Word prev_used, int prev_used_size) {
                 int all_used_size = l_used_size;
                 if (ninputs <= rr && ll != rr)
                     all_used_size += 1 & ((~prev_used) >> rr);
-                // The ridiculously opaque expression below is equivalent to, but
-                // faster than, the more obvious
+                // The ridiculously opaque expression below is
+                // equivalent to, but faster than, the more obvious
                 //   Word n_internal_gates = ngates - 1;
                 //   Word n_unused = n_internal_gates - popcount (all_used);
                 //   Word n_still_unassigned = 2 * (nwires - w - 1);
