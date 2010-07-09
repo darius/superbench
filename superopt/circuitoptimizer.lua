@@ -13,7 +13,7 @@ function find_circuits(wanted, ninputs, max_gates)
    local inputs = tabulate_inputs(ninputs)
    local mask = lshift(1, lshift(1, ninputs)) - 1
 
-   function vname(i)
+   local function vname(i)
       if i < ninputs then
          return string.char(65 + i) -- uppercase A-Z for inputs
       else
@@ -21,7 +21,7 @@ function find_circuits(wanted, ninputs, max_gates)
       end
    end
 
-   function formula(linput, rinput, nwires)
+   local function formula(linput, rinput, nwires)
       local s = ''
       for w = ninputs, nwires-1 do
          if s ~= '' then s = s .. '; ' end
@@ -31,11 +31,11 @@ function find_circuits(wanted, ninputs, max_gates)
       return s
    end
 
-   function compute(left_input, right_input)
+   local function compute(left_input, right_input)
       return bnot(band(left_input, right_input))
    end
 
-   function find_for_n(ngates)
+   local function find_for_n(ngates)
       -- TODO: try indexing wire, linput, rinput from 1
       local nwires = ninputs + ngates
       local linput = {}
@@ -46,7 +46,7 @@ function find_circuits(wanted, ninputs, max_gates)
          wire[i-1] = inputs[i]
       end
 
-      function sweeping(w)
+      local function sweeping(w)
          for ll = 0, w-1 do
             local llwire = wire[ll]
             linput[w] = ll
@@ -99,7 +99,7 @@ function tabulate_inputs(ninputs)
       return {}
    else
       local shift = lshift(1, ninputs-1)
-      function replicate(iv)
+      local function replicate(iv)
          return iv + lshift(iv, shift)
       end
       return cons(lshift(1, shift) - 1,
