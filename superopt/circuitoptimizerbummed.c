@@ -51,7 +51,7 @@ static Word compute (Word left_input, Word right_input) {
     return ~(left_input & right_input);
 }
 
-static void note_found (int llwire, int rr) {
+static void note_found (Word llwire, int rr) {
     if (llwire < wires[rr]) return;
     found = 1;
     rinputs[nwires-1] = rr;
