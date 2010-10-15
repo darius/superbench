@@ -3,7 +3,7 @@
 
 function main()
    for line in io.lines() do
-      local words, score = pick_best_permutation(split(line))
+      local words, score = pick_best_permutation(split(line:lower()))
       print(string.format('%g %s', -log2(score), table.concat(words, ' ')))
    end
 end
