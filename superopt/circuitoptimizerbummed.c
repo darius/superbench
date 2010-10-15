@@ -60,9 +60,7 @@ static void note_found (int llwire, int rr) {
 
 // Given the partial circuit before wire #w, with bitset prev_used
 // representing which gates are used as inputs within that circuit;
-// and given all_used_size as the number of bits set in prev_used,
-// plus a loop-invariant offset to let the too-many-unused comparison
-// go faster:
+// and given prev_used_size as the number of bits set in prev_used:
 // Check all extensions of that partial circuit to nwires (pruned
 // for symmetry and optimality).
 static void sweeping (int w, Word prev_used, int prev_used_size) {
