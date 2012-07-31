@@ -50,15 +50,20 @@ function find_circuits(wanted, ninputs, max_gates)
          for ll = 0, w-1 do
             local llwire = wire[ll]
             linput[w] = ll
-            for rr = 0, ll do
-               local last_wire = compute(llwire, wire[rr])
-               rinput[w] = rr
-               wire[w] = last_wire
-               if w+1< nwires then
+            if w+1 == nwires then
+               for rr = 0, ll do
+                  local last_wire = compute(llwire, wire[rr])
+                  if band(mask, last_wire) == wanted then
+                     found = true
+                     rinput[w] = rr
+                     print(formula(linput, rinput, nwires))
+                  end
+               end
+            else
+               for rr = 0, ll do
+                  wire[w] = compute(llwire, wire[rr])
+                  rinput[w] = rr
                   sweeping(w + 1)
-               elseif band(mask, last_wire) == wanted then
-                  found = true
-                  print(formula(linput, rinput, nwires))
                end
             end
          end
