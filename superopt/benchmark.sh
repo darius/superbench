@@ -25,11 +25,11 @@ for trial in 1 2 3; do
     $timex ./compiled_circuitoptimizer $args >>out-chickencompiled 2>>time-chickencompiled
 done
 
-echo lua
->out-lua 2>time-lua
+echo luajit
+>out-luajit 2>time-luajit
 for trial in 1 2 3; do
     echo trial $trial
-    $timex luajit circuitoptimizer.lua $args >>out-lua 2>>time-lua
+    $timex luajit circuitoptimizer.lua $args >>out-luajit 2>>time-luajit
 done
 
 echo python
