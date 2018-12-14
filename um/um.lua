@@ -1,6 +1,6 @@
 -- http://www.boundvariable.org/task.shtml
 
-local bit = require('bit')
+local bit = require('bit32')
 local bnot = bit.bnot
 local band = bit.band
 local lshift, rshift = bit.lshift, bit.rshift
